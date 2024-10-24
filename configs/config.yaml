@@ -1,0 +1,13 @@
+default:
+  make_logs: True
+  save_model: True
+  experiment_name: 
+  device: cpu
+
+dataset:
+  data_root: "/root/data"
+
+
+
+
+

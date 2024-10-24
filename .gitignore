@@ -1,4 +1,5 @@
 **/__pycache__/
 **/media
+**/logs
 **/.ruff_cache
-
+TASK.MD

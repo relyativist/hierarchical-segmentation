@@ -3,3 +3,7 @@
 **/logs
 **/.ruff_cache
 TASK.MD
+
+models/hierasegv2.py
+loss/
+**/.ipynb_checkpoints

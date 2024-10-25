@@ -1,13 +1,37 @@
 default:
   make_logs: True
   save_model: True
-  experiment_name: 
-  device: cpu
+  experiment_name: "encoderdecoder"
+  device: 0
 
 dataset:
-  data_root: "/root/data"
+  data_root: "/root/data"         # str data root dir
+  height: 224                     # int interpolate h
+  width: 224                      # int interpolate w
 
+transforms:
+  augment: True                   # augment train ds
+  rand_rcrop: 0.5                 # float prob rcrop
+  rand_hflip: 0.5                 # float prob hflip
+  rand_scale_rot: 0.5             # float prob scale rot
+  rand_contrast: 0.5              # float rand contrast
+  rand_blur: 0.5                  # float rand blur
 
+dataloader:
+  train_batch_size: 16
+  shuffle_train: True
+  val_batch_size: 16
+  shuffle_val: False
 
+model:
+  model_class: "encoderdecoder"    # hieraseg/encoderdercoder
 
+opt:
+  optimizer: "AdamW"
+  lr: 1e-3
+  weight_decay: 0.001
+  n_epochs: 50
+  use_scaler: True
+  criterion: "weighted_ce_loss"
+  save_model: True 
 

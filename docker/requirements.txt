@@ -1,4 +1,5 @@
 albumentations==1.4.19
+einops==0.8.0
 matplotlib==3.9.2
 monai==1.4.0
 numpy==2.1.2
@@ -6,5 +7,6 @@ opencv_python==4.10.0.84
 opencv_python_headless==4.10.0.84
 torch==2.1.0
 torcheval==0.0.7
+torchinfo==1.8.0
 torchvision==0.16.0
 tqdm==4.65.0

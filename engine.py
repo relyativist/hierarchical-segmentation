@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 import shutil, os
 import torch
 from torch.cuda.amp import GradScaler, autocast
@@ -36,27 +37,19 @@ def train_epoch(
             start_time = time.time()
 
             img = batch_data[0].to(device)
-            l1_target = batch_data[1][0].type(torch.long).to(device)
-            l2_target = batch_data[1][1].type(torch.long).to(device)
-            l3_target = batch_data[1][2].type(torch.long).to(device)
+            targets = [target.type(torch.long).to(device) for target in batch_data[1]]
 
             if use_scaler:
                 with autocast(enabled=use_scaler, dtype=torch.float16):
-                    l1_pred, l2_pred, l3_pred = model(img)
-                    l1_loss = criterion(l1_pred, l1_target)
-                    l2_loss = criterion(l2_pred, l2_target)
-                    l3_loss = criterion(l3_pred, l3_target)
-                    loss = 0.2*l1_loss + 0.5*l2_loss + 1.0*l3_loss
+                    preds = model(img)
+                    loss = criterion(preds, targets)
                 if is_train:
                     scaler.scale(loss).backward()
                     scaler.step(optimizer)
                     scaler.update()
             else:
-                l1_pred, l2_pred, l3_pred = model(img)
-                l1_loss = criterion(l1_pred, l1_target)
-                l2_loss = criterion(l2_pred, l2_target)
-                l3_loss = criterion(l3_pred, l3_target)
-                loss = 0.2*l1_loss + 0.5*l2_loss + 1.0*l3_loss
+                preds = model(img)
+                loss = criterion(preds, targets)
                 if is_train:
                     loss.backward()
                     optimizer.step()
@@ -64,16 +57,13 @@ def train_epoch(
             end_time = time.time()
             batch_time = end_time - start_time
 
-            l1_pred = torch.argmax(l1_pred, dim=1)
-            l2_pred = torch.argmax(l2_pred, dim=1)
-            l3_pred = torch.argmax(l3_pred, dim=1)
-            
-            run_loss.update(loss)
+            pred_indices = [torch.argmax(pred, dim=1) for pred in preds]
 
-            # Update confusion matrices
-            conf_mat_level1.update(l1_pred.flatten(), l1_target.flatten())
-            conf_mat_level2.update(l2_pred.flatten(), l2_target.flatten())
-            conf_mat_level3.update(l3_pred.flatten(), l3_target.flatten())
+            conf_mat_level1.update(pred_indices[0].flatten(), targets[0].flatten())
+            conf_mat_level2.update(pred_indices[1].flatten(), targets[1].flatten())
+            conf_mat_level3.update(pred_indices[2].flatten(), targets[2].flatten())
+
+            run_loss.update(loss)
 
             n_iters_total += 1
     
@@ -94,6 +84,7 @@ def train_epoch(
 
 
 def trainer(
+        config,
         model,
         train_loader,
         val_loader,
@@ -111,12 +102,14 @@ def trainer(
 
     if make_logs:
         logdir = "./logs"
-        experiment_dir = os.path.join(logdir, experiment_name)
+        exp_log = f"{experiment_name}@{datetime.now().strftime('%d.%m.%Y-%H:%M:%S')}"
+        experiment_dir = os.path.join(logdir, exp_log)
 
         if os.path.isdir(experiment_dir):
             shutil.rmtree(experiment_dir)
         
         os.makedirs(experiment_dir)
+        config.export_config_file(config.get_parsed_content(), os.path.join(experiment_dir, "config.yaml"), fmt="yaml")
         writer = SummaryWriter(os.path.join(experiment_dir, "tb"))
     else:
         writer=None
@@ -141,14 +134,7 @@ def trainer(
                                                 use_scaler = use_scaler,
                                                 writer=None
                                             )
-        """
-        print(
-            "Final training  {}/{}".format(epoch, n_epochs - 1),
-            "loss: {:.4f}".format(train_loss),
-            #"mse: {:.4f}".format(train_mse),
-            "time {:.2f}s".format(time.time() - epoch_time),
-        )
-        """
+
         if writer is not None:
             writer.add_scalar('train/epoch_loss', train_metrics['loss'], epoch)
             writer.add_scalar('train/miou_level1', train_metrics['miou_level1'], epoch)
@@ -166,7 +152,6 @@ def trainer(
         
         b_new_best = False
         
-
         if (epoch + 1) % val_every == 0:
 
             epoch_time = time.time()
@@ -181,14 +166,7 @@ def trainer(
                                                 is_train = False,
                                                 writer=None
                                             )
-            """
-            print(
-                "Final validation  {}/{}".format(epoch, n_epochs - 1),
-                "loss: {:.4f}".format(val_loss),
-                #"mse: {:.4f}".format(val_mse),
-                "time {:.2f}s".format(time.time() - epoch_time),
-            )
-            """
+
             print(
                 f"Validation epoch {epoch}/{n_epochs}",
                 f"loss: {val_metrics['loss']:.4f}",
@@ -208,21 +186,23 @@ def trainer(
             if val_metrics['loss'] < val_loss_min:
                 print(f"Validation loss decreased {val_loss_min:.4f} -> {val_metrics['loss']:.4f}")
                 val_loss_min = val_metrics['loss']
+                b_new_best = True
                 
-                if make_logs and save_model:
-                    save_checkpoint(
-                        model, 
-                        epoch, 
-                        experiment_dir, 
-                        filename="model.pt",
-                        best_loss=val_metrics['loss']
-                    )
+            if make_logs and save_model:
+                save_checkpoint(
+                    model, 
+                    epoch, 
+                    experiment_dir, 
+                    filename="model.pt",
+                    best_loss=val_metrics['loss']
+                )
+                if b_new_best:
                     print("Saving best model!")
                     shutil.copyfile(
                         os.path.join(experiment_dir, "model.pt"),
                         os.path.join(experiment_dir, "model_best.pt")
                     )
         scheduler.step()
-        print("ALL DONE")
+    print("ALL DONE")
         
     return train_metrics['loss']

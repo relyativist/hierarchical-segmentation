@@ -2,9 +2,9 @@ import torch.nn as nn
 import torchvision.models as models
 
 
-class HierarchicalSegmentationModel(nn.Module):
+class HieraSeg(nn.Module):
     def __init__(self):
-        super(HierarchicalSegmentationModel, self).__init__()
+        super(HieraSeg, self).__init__()
         self.encoder = models.resnet50(weights="IMAGENET1K_V1")
         self.encoder_layers = list(self.encoder.children())[:-2]
         self.encoder = nn.Sequential(*self.encoder_layers)

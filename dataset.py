@@ -108,31 +108,12 @@ class PascalPartDataset(Dataset):
         
         return level2_mask, level3_mask
 
-import pdb
-def setup_dataloaders():
-    height = 224
-    width = 224
 
-    train_transf = A.Compose(
-        [
-            A.RandomResizedCrop(height=height, width=width, scale=(0.8, 1.0)),
-            A.HorizontalFlip(p=0.5),
-            A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.15, rotate_limit=30, p=0.5),
-            A.OneOf([
-                A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=1),
-                A.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1, p=1),
-                A.GaussNoise(var_limit=(10.0, 50.0), p=1),
-            ], p=0.5),
-            A.OneOf([
-                A.MotionBlur(blur_limit=3, p=1),
-                A.MedianBlur(blur_limit=3, p=1),
-                A.GaussianBlur(blur_limit=3, p=1),
-            ], p=0.2),
-            A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-            ToTensorV2()
-        ]
-    )
-    
+def setup_dataloaders(config):
+    augment = config["transforms"]["augment"]
+    height = config["dataset"]["height"]
+    width = config["dataset"]["width"]
+
     val_transf = A.Compose(
         [
             A.Resize(height=height, width=width),
@@ -140,28 +121,83 @@ def setup_dataloaders():
             ToTensorV2()
         ]
     )
+
+    if augment:
+        try:
+            rand_rcrop = config["transforms"]["rand_rcrop"]
+            rand_hflip = config["transforms"]["rand_hflip"]
+            rand_scale_rot = config["transforms"]["rand_scale_rot"]
+            rand_contrast = config["transforms"]["rand_contrast"]
+            rand_blur = config["transforms"]["rand_blur"]
+        except:
+            ValueError("No transform found in config")
+
+        transforms = [
+            A.Resize(height=height, width=width)
+        ]
+
+        if rand_rcrop > 0.0:
+            transforms.append(
+                A.RandomResizedCrop(height=height, width=width, scale=(0.8, 1.0), p=rand_rcrop)
+            )
+        if rand_hflip > 0.0:
+            transforms.append(
+                A.HorizontalFlip(p=rand_hflip)
+            )
+        if rand_scale_rot > 0.0:
+            transforms.append(
+                A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.15, rotate_limit=30, p=rand_scale_rot)
+            )
+        if rand_contrast > 0.0:
+            transforms.append(
+                A.OneOf([
+                    A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=1),
+                    A.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1, p=1),
+                    A.GaussNoise(var_limit=(10.0, 50.0), p=1),
+                ], p=rand_contrast)
+            )
+        if rand_blur > 0.0:
+            transforms.append(
+                A.OneOf([
+                    A.MotionBlur(blur_limit=3, p=1),
+                    A.MedianBlur(blur_limit=3, p=1),
+                    A.GaussianBlur(blur_limit=3, p=1),
+                ], p=rand_blur)
+            )
+
+        transforms.extend(
+            [
+                A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+                ToTensorV2()
+            ]
+        )
+        train_transf = A.Compose(transforms)
+    else:
+        train_transf = val_transf
+    
+
     #pdb.set_trace()
     train_ds = PascalPartDataset(root_dir="/root/data", split="train", transform=train_transf)
     val_ds = PascalPartDataset(root_dir="/root/data", split="val", transform=val_transf)
-
+    #pdb.set_trace()
     train_loader = DataLoader(
         train_ds,
-        shuffle=True,
-        batch_size=32
+        shuffle=config["dataloader"]["shuffle_train"],
+        batch_size=config["dataloader"]["train_batch_size"]
     )
 
     val_loader = DataLoader(
         val_ds,
-        shuffle=False,
-        batch_size=32,
+        shuffle=config["dataloader"]["shuffle_val"],
+        batch_size=config["dataloader"]["val_batch_size"],
     )
     #pdb.set_trace()
     return train_loader, val_loader
 
 
 def setup_eval_dataloader():
-    height = 256
-    width = 256
+    height = 224
+    width = 224
 
     val_transf = A.Compose(
         [

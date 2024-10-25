@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from dataset import setup_eval_dataloader
 import albumentations as A
-from models.hieraseg import HierarchicalSegmentationModel
+from models.encskipdec import HieraSegV2
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
@@ -195,7 +195,7 @@ def main():
 
     test_loader = setup_eval_dataloader()
     
-    model = HierarchicalSegmentationModel().to(config['device'])
+    model = HieraSegV2().to(config['device'])
     
     # Load checkpoint
     checkpoint_path = os.path.join("logs", args.experiment_name, "model_best.pt")
@@ -231,6 +231,6 @@ if __name__ == "__main__":
     python eval.py --experiment_name Test --visualize --num_viz 5
 
     # Custom visualization directory
-    python eval.py --experiment_name Test --visualize --num_viz 10 --viz_dir ./my_results
+    python eval.py --experiment_name test_exp --visualize --num_viz 10 --viz_dir ./logs/test_exp
     """
     main()

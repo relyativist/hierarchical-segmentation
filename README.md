@@ -1,8 +1,32 @@
 # Hierarchical Semantic Segmentation
 
-Implementation of hierarchical semantic segmentation model trained on Pascal-Part dataset. The model performs segmentation with 3 hierarchical levels.
+Implementation of hierarchical semantic segmentation model trained on Pascal-Part dataset. The model performs segmentation with 3 hierarchical levels:
 
-Results of Encoder Decoder segmentatation models/encskipdec.py are in notebooks/training.ipynb, model was trained for 50 epochs on  NVIDIA GeForce RTX 4090
+ Level 1 (Fine): Background/Foreground segmentation (2 classes)
+
+Level 2 (Middle): Background/Upper Body/Lower Body regions (3 classes)
+
+Level 3 (Coarse): Detailed body parts segmentation (7 classes)
+
+## Model
+The model uses encoder-decoder architecture (models/encskipdec.py) with:
+
+ResNet-50 backbone pretrained on ImageNet
+Skip connections between encoder and decoder
+Three decoder branches for hierarchical predictions
+Tested with different loss functions:
+
+Weighted Cross-Entropy Loss (baseline)
+Tree-Min Loss (improved results)
+
+## Results
+Model trained for 50 epochs on NVIDIA GeForce RTX 4090.
+Hold-out test set results:
+
+| Loss Function  | Level 1 mIoU | Level 2 mIoU | Level 3 mIoU |
+|---------------|--------------|--------------|--------------|
+| Weighted CE   | 0.75        | 0.62        | 0.35        |
+| Tree-Min Loss | 0.78        | 0.65        | 0.40        |
 
 ## Requirements
 

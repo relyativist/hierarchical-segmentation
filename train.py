@@ -55,6 +55,7 @@ def main(config):
     try:
         criterion = {
             "weighted_ce_loss": WeightedCrossEntropyLoss(),
+            "tree_min_loss": TreeMinLoss()
             
         }[config["opt"]["criterion"]]
     except ValueError as ve:

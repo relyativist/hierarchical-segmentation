@@ -6,7 +6,7 @@ import math
 
 
 class WeightedCrossEntropyLoss(nn.Module):
-    def __init__(self, class_levels=[2, 3, 7], level_weights=[0.2, 0.5, 1.0]):
+    def __init__(self, class_levels=[2, 3, 7], level_weights=[0.1, 0.4, 1.0]):
         super().__init__()
         self.class_levels = class_levels
         self.level_weights = level_weights

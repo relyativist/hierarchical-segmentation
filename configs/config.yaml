@@ -1,7 +1,7 @@
 default:
   make_logs: True
   save_model: True
-  experiment_name: "encoderdecoder"
+  experiment_name: "encskipdec_treeminloss_v3_AdamW_50ep"
   device: 0
 
 dataset:
@@ -28,10 +28,10 @@ model:
 
 opt:
   optimizer: "AdamW"
-  lr: 1e-3
-  weight_decay: 0.001
+  lr: 3e-4
+  weight_decay: 0.01
   n_epochs: 50
   use_scaler: True
-  criterion: "weighted_ce_loss"
+  criterion: "tree_min_loss"       # tree_min_loss or weighted_ce_loss
   save_model: True 
 

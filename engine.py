@@ -118,6 +118,7 @@ def trainer(
 
     n_iters_total_train, n_iters_total_val = 0, 0
     val_loss_min = np.inf
+    val_mIoU_max = -np.inf
 
     for epoch in range(1, n_epochs + 1):
         print(time.ctime(), "Epoch:", epoch)
@@ -182,19 +183,26 @@ def trainer(
                 writer.add_scalar('val/miou_level2', val_metrics['miou_level2'], epoch)
                 writer.add_scalar('val/miou_level3', val_metrics['miou_level3'], epoch)
 
-
+            """
             if val_metrics['loss'] < val_loss_min:
                 print(f"Validation loss decreased {val_loss_min:.4f} -> {val_metrics['loss']:.4f}")
                 val_loss_min = val_metrics['loss']
                 b_new_best = True
-                
+            """
+            if val_metrics['miou_level3'] > val_mIoU_max:
+                print(f"Validation mIoU3 increased {val_mIoU_max:.4f} -> {val_metrics['miou_level3']:.4f}")
+                val_mIoU_max = val_metrics['miou_level3']
+                b_new_best = True
+
+
             if make_logs and save_model:
                 save_checkpoint(
                     model, 
                     epoch, 
                     experiment_dir, 
                     filename="model.pt",
-                    best_loss=val_metrics['loss']
+                    best_loss=val_metrics['loss'],
+                    #best_mIoU3=val_metrics['miou_level3']
                 )
                 if b_new_best:
                     print("Saving best model!")

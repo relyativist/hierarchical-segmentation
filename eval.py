@@ -170,7 +170,7 @@ def main():
     # Parse arguments
     parser = argparse.ArgumentParser(description='Evaluate hierarchical segmentation model')
     parser.add_argument('--batch_size', type=int, default=16, help='Batch size for evaluation')
-    parser.add_argument('--experiment_name', type=str, default='Test', help='Experiment name')
+    parser.add_argument('--experiment_name', "-e", type=str, default='Test', help='Experiment name')
     parser.add_argument('--visualize', action='store_true', help='Enable visualization of predictions')
     parser.add_argument('--num_viz', type=int, default=5, help='Number of images to visualize')
     parser.add_argument('--viz_dir', type=str, default=None, 

@@ -11,13 +11,22 @@ Level 3 (Coarse): Detailed body parts segmentation (7 classes)
 ## Model
 The model uses encoder-decoder architecture (models/encskipdec.py) with:
 
-ResNet-50 backbone pretrained on ImageNet
-Skip connections between encoder and decoder
-Three decoder branches for hierarchical predictions
-Tested with different loss functions:
+* ResNet-50 backbone pretrained on ImageNet
+* Skip connections between encoder and decoder
+* Three decoder branches for hierarchical predictions
+* Tested with different loss functions:
 
 Weighted Cross-Entropy Loss (baseline)
+
 Tree-Min Loss (improved results)
+```
+@article{li2022deep,
+  title={Deep Hierarchical Semantic Segmentation},
+  author={Li, Liulei and Zhou, Tianfei and Wang, Wenguan and Li, Jianwu and Yang, Yi},
+  journal={arXiv preprint arXiv:2203.14335},
+  year={2022}
+}
+```
 
 ## Results
 Model trained for 50 epochs on NVIDIA GeForce RTX 4090.
